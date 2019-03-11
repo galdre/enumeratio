@@ -7,16 +7,16 @@ This library is an alpha-quality implementation of enumeration types in Clojure(
 With a bit of programmer diligence, or with tools like `spec`, this is largely a solved problem. However, whenever these enumerated constants have implications for business logic, one tends to see a great deal of code like the following, scattered across half a dozen different files:
 
 ```clj
-(cond (= ::import/foo x)
+(cond (= ::st/pending x)
       (do-something ...)
-      (= ::import/bar x)
+      (= ::st/completed x)
       (do-elsething ...))
 
 ;; Or perhaps:
 
 (case x
-   ::import/foo (do-something ...)
-   ::import/bar (do-elsething ...))
+   ::st/pending (do-something ...)
+   ::ist/completed (do-elsething ...))
 ```
 
 This is less than ideal. In particular, it is troublesome because this scatters knowledge of the enumerated set across the codebase. Again, a diligent programmer will avoid doing this, but Clojure does not provide any built-in tools for it.
@@ -26,8 +26,7 @@ This is less than ideal. In particular, it is troublesome because this scatters 
 ```clj
 (defenum status
    #{::pending ::completed}
-  my-library/SomeProtocol
-  (foo [status-kw] ...)
+  & opts+specs
   ...)
   
   ;; Or better yet:
@@ -35,7 +34,10 @@ This is less than ideal. In particular, it is troublesome because this scatters 
   {::pending "I am a pending status",
    ::completed "This status is completed in the sense that..."}
  my-library/someProtocol
- (foo [status-kw] ...)
+ (foo [status-kw]
+   (case status-kw
+         ::pending (do-something ...)
+	 ::completed (do-else-thing ...)))
  ...)
 ```
 
@@ -62,9 +64,7 @@ How might you use it?
 ```
 (if-let [status (st/status-for ::st/pending)]
   (foo status)
-  (throw
-    (Exception.
-	  "That's not a valid status!")
+  (throw (Exception. "Invalid status!")))
 ```
 
 Knowledge encapsulated!
